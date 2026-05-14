@@ -1,81 +1,217 @@
+# ============================================================
+# MaxVision X MCP — Portainer Stack — v0.1.0 (Oracle VPS arm64)
+# Pré-preenchido para VPS oracle.produtoramaxvision.com.br (163.176.241.144)
+#
+# Convenções desta VPS (paridade LinkedIn deployed):
+#   - Network externa: `net` (Traefik 3.4 já está nela)
+#   - Cert resolver: `letsencryptresolver`
+#   - Postgres dedicado isolado, padrão `x_*`
+#   - Imagem MCP arm64 (CI multi-arch builda linux/amd64 + linux/arm64)
+#   - Domínio: x-api.produtoramaxvision.com.br (DNS-only/gray no Cloudflare)
+#
+# DEPLOY (manual, via Portainer UI):
+#   1. Portainer → Stacks → Add stack → name: "maxvision-x-mcp"
+#   2. Cole este YAML
+#   3. Em "Environment variables", defina TODAS as variáveis abaixo:
+#
+#   === OBRIGATÓRIAS ===
+#        MCP_VERSION=latest                                 # ou sha-<hash> para pin
+#        MCP_HOST=x-api.produtoramaxvision.com.br
+#        POSTGRES_PASSWORD=<openssl rand -hex 24>
+#        MASTER_KEY=<openssl rand -hex 32>                  # 64 hex chars AES-256
+#        MCP_API_KEYS=mxv_xxx,mxv_yyy                       # comma-sep allowlist
+#        ACME_EMAIL=produtoramaxvision@gmail.com
+#
+#   === LLM PROVIDER (escolha 1) ===
+#        LLM_PROVIDER=grok                                  # ou "openrouter"
+#        XAI_API_KEY=xai-...                                # se LLM_PROVIDER=grok
+#        OPENROUTER_API_KEY=sk-or-v1-...                    # se LLM_PROVIDER=openrouter
+#        LLM_MODEL=grok-4-1-fast-non-reasoning              # opcional override
+#
+#   === X API v2 (writes Layer B) ===
+#        X_API_BEARER_TOKEN=...                             # App-Only Bearer
+#        X_API_CLIENT_ID=...                                # OAuth 2.0 PKCE
+#        X_API_CLIENT_SECRET=...
+#
+#   === APIFY (bulk reads Layer C) ===
+#        APIFY_API_TOKEN=apify_api_...
+#
+#   === LICENSE GATING (ativa em produção paga) ===
+#        LICENSE_CHECK_ENABLED=false                        # true depois deploy Worker
+#        LICENSE_SERVER_URL=https://x-license.produtoramaxvision.com.br
+#
+#   === WEBHOOKS / n8n hybrid (opcional) ===
+#        ENABLE_WEBHOOKS=true
+#        WEBHOOK_SECRET=<openssl rand -hex 32>
+#
+#   === OPCIONAIS ===
+#        LOG_LEVEL=info
+#        RATE_LIMIT_PER_MINUTE=10
+#        PATCHRIGHT_HEADLESS=true
+#
+#   4. Deploy.
+# ============================================================
 version: "3.9"
-name: maxvision-x-mcp
 
 services:
-  mcp:
-    image: ghcr.io/produtoramaxvision/maxvision-x-mcp:${MCP_VERSION}
+  x_mcp_server:
+    image: ghcr.io/produtoramaxvision/maxvision-x-mcp:${MCP_VERSION:-latest}
     environment:
       NODE_ENV: production
-      MCP_PORT: 3000
       MCP_TRANSPORT: http
+      MCP_PORT: "3000"
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://mcp:${POSTGRES_PASSWORD}@x_mcp_postgres:5432/x_mcp
+      REDIS_URL: redis://x_mcp_redis:6379
       MASTER_KEY: ${MASTER_KEY}
       MCP_API_KEYS: ${MCP_API_KEYS}
-      XAI_API_KEY: ${XAI_API_KEY}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      X_API_BEARER_TOKEN: ${X_API_BEARER_TOKEN}
-      APIFY_API_TOKEN: ${APIFY_API_TOKEN}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-10}
+      PROFILE_BASE_DIR: /data/profiles
+      TZ: America/Sao_Paulo
+      # LLM provider (Layer A)
       LLM_PROVIDER: ${LLM_PROVIDER:-grok}
-      LICENSE_CHECK_ENABLED: ${LICENSE_CHECK_ENABLED:-true}
+      LLM_MODEL: ${LLM_MODEL:-}
+      XAI_API_KEY: ${XAI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # X API v2 (Layer B writes + cirurgical reads)
+      X_API_BEARER_TOKEN: ${X_API_BEARER_TOKEN:-}
+      X_API_CLIENT_ID: ${X_API_CLIENT_ID:-}
+      X_API_CLIENT_SECRET: ${X_API_CLIENT_SECRET:-}
+      # Apify (Layer C bulk reads)
+      APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
+      # License gating
+      LICENSE_CHECK_ENABLED: ${LICENSE_CHECK_ENABLED:-false}
       LICENSE_SERVER_URL: ${LICENSE_SERVER_URL:-https://x-license.produtoramaxvision.com.br}
+      # Webhooks (n8n hybrid Variant B)
       ENABLE_WEBHOOKS: ${ENABLE_WEBHOOKS:-true}
-      WEBHOOK_SECRET: ${WEBHOOK_SECRET}
-      PATCHRIGHT_HEADLESS: "true"
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      # Browser (Layer D Patchright fallback)
+      PATCHRIGHT_HEADLESS: ${PATCHRIGHT_HEADLESS:-true}
     volumes:
-      - profile-data:/data/profiles
-      - mcp-logs:/var/log/mcp
+      - x_mcp_profiles_data:/data/profiles
     networks:
-      - traefik-public
-      - mcp-internal
+      - net
+      - x_mcp_internal
+    depends_on:
+      - x_mcp_postgres
+      - x_mcp_redis
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     deploy:
-      replicas: 1
+      mode: replicated
+      replicas: ${MCP_REPLICAS:-1}
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
       restart_policy:
-        condition: on-failure
-        max_attempts: 3
+        condition: any
+        delay: 5s
+        max_attempts: 5
       resources:
-        limits: { cpus: "2.0", memory: 2G }
-        reservations: { cpus: "0.5", memory: 512M }
+        limits:
+          cpus: "1.5"
+          memory: 1024M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=traefik-public"
-        - "traefik.http.routers.x-mcp.rule=Host(`x-api.produtoramaxvision.com.br`)"
-        - "traefik.http.routers.x-mcp.entrypoints=websecure"
-        - "traefik.http.routers.x-mcp.tls.certresolver=letsencryptresolver"
-        - "traefik.http.services.x-mcp.loadbalancer.server.port=3000"
+        - "traefik.docker.network=net"
+        - "traefik.http.routers.x-mcp-server.rule=Host(`${MCP_HOST}`)"
+        - "traefik.http.routers.x-mcp-server.entrypoints=websecure"
+        - "traefik.http.routers.x-mcp-server.tls=true"
+        - "traefik.http.routers.x-mcp-server.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.x-mcp-server.loadbalancer.server.port=3000"
 
-  postgres:
+  x_mcp_postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_USER: mcp
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: x_mcp
+      TZ: America/Sao_Paulo
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks: [mcp-internal]
+      - x_mcp_postgres_data:/var/lib/postgresql/data
+    networks:
+      - x_mcp_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp -d x_mcp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     deploy:
+      mode: replicated
+      replicas: 1
       restart_policy:
-        condition: on-failure
+        condition: any
+        delay: 10s
+        max_attempts: 5
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
 
-  redis:
+  x_mcp_redis:
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
     volumes:
-      - redis-data:/data
-    networks: [mcp-internal]
+      - x_mcp_redis_data:/data
+    networks:
+      - x_mcp_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     deploy:
+      mode: replicated
+      replicas: 1
       restart_policy:
-        condition: on-failure
+        condition: any
+        delay: 5s
+        max_attempts: 5
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
 
 volumes:
-  postgres-data:
-  redis-data:
-  profile-data:
-  mcp-logs:
+  x_mcp_postgres_data:
+  x_mcp_redis_data:
+  x_mcp_profiles_data:
 
 networks:
-  traefik-public:
+  net:
     external: true
-  mcp-internal:
+  x_mcp_internal:
     driver: overlay
+    attachable: true

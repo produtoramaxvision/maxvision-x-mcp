@@ -8,11 +8,10 @@ routes = [
   { pattern = "x-license.produtoramaxvision.com.br/v1/*", zone_name = "produtoramaxvision.com.br" },
 ]
 
-# KV namespace for license key storage. Create with:
-#   wrangler kv:namespace create maxv-x-licenses
+# KV namespace for license key storage. Provisioned 2026-05-14 via cloudflare-mcp.
 [[kv_namespaces]]
 binding = "LICENSES"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "1c6920100ae34f21b808d980e59373e9"
 
 [vars]
 ENVIRONMENT = "production"

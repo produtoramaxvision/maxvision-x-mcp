@@ -108,22 +108,31 @@ maxvision-x-mcp-git/
 ## Sprint 1 entregáveis (sessão atual)
 
 - [x] Scaffold directory structure
-- [ ] PLAN-SPRINT1.md (este arquivo)
-- [ ] mcp-server: package.json, configs, src/* (env/logger/errors/version/server/http)
-- [ ] mcp-server: auth (api-key, cookies, license, llm-provider, request-context)
-- [ ] mcp-server: db (client, schema com posts_cache/users_cache/accounts/audit_log)
-- [ ] mcp-server: rate-limit (strategy, token-bucket)
-- [ ] mcp-server: grok (client x_search)
-- [ ] mcp-server: x-api (oauth2 + v2-client)
-- [ ] mcp-server: scrapers (apify-x)
-- [ ] mcp-server: browser (pool, anti-detect)
-- [ ] mcp-server: tools (_base, _registry, schemas + 16 tools)
-- [ ] mcp-server/docker (Dockerfile, compose, init.sql)
-- [ ] workers/license/ clone+adapt
-- [ ] landing/ (index, pricing, thanks)
-- [ ] plugins/x-maxvision/ (plugin.json + 8 commands + 4 agents + 5 skills + 3 hooks)
-- [ ] sprint0-deliverables stubs
-- [ ] .github/workflows/ (ci.yml, release.yml)
-- [ ] README.md raiz
-- [ ] gh repo create (público + privado)
-- [ ] commit inicial v0.1.0
+- [x] PLAN-SPRINT1.md (este arquivo)
+- [x] mcp-server: package.json, configs, src/* (env/logger/errors/version/server/http)
+- [x] mcp-server: auth (api-key, cookies, license, llm-provider, request-context)
+- [x] mcp-server: db (client, schema com posts_cache/users_cache/accounts/audit_log)
+- [x] mcp-server: rate-limit (strategy, token-bucket)
+- [x] mcp-server: grok (client x_search)
+- [x] mcp-server: x-api (oauth2 + v2-client)
+- [x] mcp-server: scrapers (apify-x)
+- [x] mcp-server: browser (pool, anti-detect)
+- [x] mcp-server: tools (_base, _registry, schemas + 16 tools)
+- [x] mcp-server/docker (Dockerfile, compose, init.sql)
+- [x] workers/license/ clone+adapt
+- [x] landing/ (index, pricing, thanks)
+- [x] plugins/x-maxvision/ (plugin.json + 9 commands + 4 agents + 5 skills + 3 hooks)
+- [x] sprint0-deliverables stubs
+- [x] .github/workflows/ (ci.yml, release.yml, landing-deploy.yml)
+- [x] README.md raiz
+- [x] commit inicial v0.1.0 (37c1216)
+- [x] CF DNS records (x-api, x, x-license) — via mcp__cloudflare__execute 2026-05-14
+- [x] CF KV namespace `maxv-x-licenses` (id `1c6920100ae34f21b808d980e59373e9`)
+- [x] CF Pages project `maxvision-x-landing`
+- [x] Stripe test products + prices + payment links — Pro `prod_UWBIGBOgryN2A2` ($29), Agency `prod_UWBI8E0wu0JcsX` ($99)
+- [x] Portainer stack X reescrita (paridade LinkedIn deployed — net externa, certresolver letsencryptresolver, x_* prefix)
+- [ ] gh repo create (BLOQUEADO — gh token inválido + api.github.com timeout)
+- [ ] git push -u origin main (depende repo create)
+- [ ] Custom Domain ativar no CF Pages `maxvision-x-landing` (UI)
+- [ ] Stripe webhook → x-license/v1/issue (depende deploy Worker)
+- [ ] `wrangler login` + Worker secrets + deploy
