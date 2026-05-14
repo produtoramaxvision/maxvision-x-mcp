@@ -1,0 +1,23 @@
+name = "maxv-x-license"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Routes — bind to x-license.produtoramaxvision.com.br
+routes = [
+  { pattern = "x-license.produtoramaxvision.com.br/v1/*", zone_name = "produtoramaxvision.com.br" },
+]
+
+# KV namespace for license key storage. Create with:
+#   wrangler kv:namespace create maxv-x-licenses
+[[kv_namespaces]]
+binding = "LICENSES"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Set via `wrangler secret put STRIPE_WEBHOOK_SECRET`
+# Set via `wrangler secret put STRIPE_SECRET_KEY`
+# Set via `wrangler secret put ADMIN_TOKEN` for /v1/revoke
+# Set via `wrangler secret put RESEND_API_KEY` (optional notification)

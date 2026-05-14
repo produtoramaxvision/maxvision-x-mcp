@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+mcp-server/docker/secrets/*.txt
+mcp-server/docker/secrets/*.json
+!mcp-server/docker/secrets/README.md
+mcp-server/python/__pycache__/
+.vscode/
+.idea/
+coverage/
+*.tsbuildinfo
+.wrangler/

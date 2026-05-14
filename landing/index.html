@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Automação X (Twitter) nativa para Claude Code. Grok + X API + Patchright. 16 tools v0.1." />
+    <meta property="og:title" content="MaxVision X Suite" />
+    <meta property="og:description" content="Automação X (Twitter) nativa para Claude Code." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://x.produtoramaxvision.com.br" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#f5f5f5",
+                100: "#e5e5e5",
+                500: "#171717",
+                600: "#0a0a0a",
+                700: "#000000",
+                900: "#000000",
+              },
+              accent: {
+                500: "#1d9bf0",
+                600: "#1a8cd8",
+              },
+            },
+            fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+    <title>MaxVision X Suite — Em breve</title>
+  </head>
+  <body class="bg-black text-slate-100 font-sans antialiased">
+    <main class="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+      <section class="max-w-3xl w-full mx-auto text-center">
+        <p class="uppercase tracking-widest text-xs text-slate-400 mb-4">
+          MaxVision · X Suite
+        </p>
+        <h1 class="text-4xl md:text-6xl font-extrabold leading-tight tracking-tight mb-6">
+          Seu X (Twitter) no
+          <span class="text-accent-500">Claude Code</span>.
+        </h1>
+        <p class="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+          Search, post, reply, DM e analytics — 16 tools v0.1 com xAI Grok
+          x_search + X API v2 + Patchright fallback ToS-safe. <strong>Em breve.</strong>
+        </p>
+
+        <form id="waitlist-form" class="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+          <input
+            type="email"
+            name="email"
+            required
+            autocomplete="email"
+            placeholder="seu@email.com"
+            class="flex-1 px-4 py-3 rounded-lg bg-slate-900/60 border border-slate-700 text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+          />
+          <button
+            type="submit"
+            class="px-6 py-3 rounded-lg bg-accent-500 hover:bg-accent-600 transition-colors font-semibold"
+          >
+            Entrar na waitlist
+          </button>
+        </form>
+
+        <p id="waitlist-status" class="mt-4 text-sm text-slate-400 min-h-5" aria-live="polite"></p>
+
+        <p class="text-xs text-slate-500 mt-12 max-w-xl mx-auto leading-relaxed">
+          MaxVision X Suite executa ações em sua conta X via OAuth2 + cookie de sessão.
+          Automação em X pode violar os Termos de Uso da plataforma e resultar em
+          restrições de conta. Use com moderação.
+        </p>
+      </section>
+
+      <footer class="mt-16 text-xs text-slate-500 text-center">
+        <p>© 2026 MaxVision Produtora · <a href="/pricing" class="hover:text-slate-300">Pricing</a></p>
+      </footer>
+    </main>
+
+    <script>
+      document.getElementById("waitlist-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const status = document.getElementById("waitlist-status");
+        const email = new FormData(e.target).get("email");
+        status.textContent = "Enviando...";
+        try {
+          const res = await fetch("/api/waitlist", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+          if (res.ok) {
+            status.textContent = "Pronto! Avisaremos no lançamento.";
+            e.target.reset();
+          } else {
+            status.textContent = "Algo deu errado — tente em alguns instantes.";
+          }
+        } catch {
+          status.textContent = "Sem conexão. Tente novamente.";
+        }
+      });
+    </script>
+  </body>
+</html>

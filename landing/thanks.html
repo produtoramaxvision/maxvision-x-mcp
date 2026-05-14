@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Obrigado — MaxVision X Suite</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-black text-slate-100 font-sans antialiased">
+    <main class="min-h-screen flex items-center justify-center px-6 py-16">
+      <section class="max-w-xl w-full text-center">
+        <h1 class="text-3xl md:text-4xl font-extrabold mb-4">Obrigado pela assinatura!</h1>
+        <p class="text-slate-300 mb-8">Sua chave de licença foi enviada por email e está pronta abaixo.</p>
+
+        <div class="bg-slate-900/60 border border-slate-700 rounded-lg p-4 mb-6">
+          <p id="license-key" class="font-mono text-lg break-all">Carregando...</p>
+        </div>
+
+        <p class="text-sm text-slate-400 mb-6">Configure no seu Claude Code:</p>
+        <pre class="bg-slate-900/80 border border-slate-800 rounded-lg p-4 text-left text-xs overflow-x-auto"><code>[Environment]::SetEnvironmentVariable("MAXVISION_LICENSE", "&lt;chave acima&gt;", "User")</code></pre>
+
+        <p class="text-xs text-slate-500 mt-8">Reinicie o Claude Code após setar a env var.</p>
+      </section>
+    </main>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const session = params.get("session_id");
+      if (session) {
+        fetch(`https://x-license.produtoramaxvision.com.br/v1/license-by-session?session=${encodeURIComponent(session)}`)
+          .then((r) => r.json())
+          .then((d) => {
+            document.getElementById("license-key").textContent = d.licenseKey || "Licença ainda sendo emitida — verifique seu email.";
+          })
+          .catch(() => {
+            document.getElementById("license-key").textContent = "Erro ao buscar — verifique seu email.";
+          });
+      } else {
+        document.getElementById("license-key").textContent = "Verifique seu email.";
+      }
+    </script>
+  </body>
+</html>

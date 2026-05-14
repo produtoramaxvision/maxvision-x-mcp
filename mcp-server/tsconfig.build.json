@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "sourceMap": false,
+    "declaration": false
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "drizzle/migrations",
+    "scripts",
+    "**/*.test.ts",
+    "vitest.config.ts"
+  ]
+}

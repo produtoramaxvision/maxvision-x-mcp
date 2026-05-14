@@ -1,0 +1,139 @@
+# ============================================================
+# MaxVision X MCP — docker-compose.yml
+# Modo: Docker Engine standalone (single host)
+# Uso: docker compose up -d
+# ============================================================
+name: maxvision-x-mcp
+
+services:
+  mcp:
+    image: ghcr.io/produtoramaxvision/maxvision-x-mcp:${MCP_VERSION:-latest}
+    build:
+      context: ../..
+      dockerfile: mcp-server/docker/Dockerfile
+    container_name: maxvision-x-mcp
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      MCP_PORT: 3000
+      MCP_TRANSPORT: http
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://${POSTGRES_USER:-mcp}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-x_mcp}
+      REDIS_URL: redis://redis:6379
+      MASTER_KEY_FILE: /run/secrets/master_key
+      MCP_API_KEYS: ${MCP_API_KEYS:-}
+      XAI_API_KEY_FILE: /run/secrets/xai_api_key
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter_api_key
+      X_API_BEARER_TOKEN_FILE: /run/secrets/x_api_bearer
+      X_API_CLIENT_ID: ${X_API_CLIENT_ID:-}
+      X_API_CLIENT_SECRET_FILE: /run/secrets/x_api_client_secret
+      APIFY_API_TOKEN_FILE: /run/secrets/apify_api_token
+      LLM_PROVIDER: ${LLM_PROVIDER:-grok}
+      LICENSE_CHECK_ENABLED: ${LICENSE_CHECK_ENABLED:-false}
+      LICENSE_SERVER_URL: ${LICENSE_SERVER_URL:-https://x-license.produtoramaxvision.com.br}
+      ENABLE_WEBHOOKS: ${ENABLE_WEBHOOKS:-true}
+      WEBHOOK_SECRET_FILE: /run/secrets/webhook_secret
+      PATCHRIGHT_HEADLESS: ${PATCHRIGHT_HEADLESS:-true}
+    secrets:
+      - master_key
+      - xai_api_key
+      - openrouter_api_key
+      - x_api_bearer
+      - x_api_client_secret
+      - apify_api_token
+      - webhook_secret
+    volumes:
+      - profile-data:/data/profiles
+      - mcp-logs:/var/log/mcp
+    networks:
+      - traefik-public
+      - mcp-internal
+    ports:
+      - "${MCP_PORT:-3000}:3000"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "traefik-public"
+      traefik.http.routers.x-mcp.rule: "Host(`${MCP_HOST:-x-api.localhost}`)"
+      traefik.http.routers.x-mcp.entrypoints: "websecure"
+      traefik.http.routers.x-mcp.tls.certresolver: "letsencryptresolver"
+      traefik.http.services.x-mcp.loadbalancer.server.port: "3000"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: maxvision-x-mcp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mcp}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: ${POSTGRES_DB:-x_mcp}
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - mcp-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mcp} -d ${POSTGRES_DB:-x_mcp}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: maxvision-x-mcp-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis-data:/data
+    networks:
+      - mcp-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+secrets:
+  master_key:
+    file: ./secrets/master_key.txt
+  xai_api_key:
+    file: ./secrets/xai_api_key.txt
+  openrouter_api_key:
+    file: ./secrets/openrouter_api_key.txt
+  x_api_bearer:
+    file: ./secrets/x_api_bearer.txt
+  x_api_client_secret:
+    file: ./secrets/x_api_client_secret.txt
+  apify_api_token:
+    file: ./secrets/apify_api_token.txt
+  webhook_secret:
+    file: ./secrets/webhook_secret.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+
+volumes:
+  postgres-data:
+  redis-data:
+  profile-data:
+  mcp-logs:
+
+networks:
+  traefik-public:
+    external: true
+  mcp-internal:
+    driver: bridge
+    internal: false

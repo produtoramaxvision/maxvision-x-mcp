@@ -1,0 +1,59 @@
+{
+  "name": "x-maxvision",
+  "version": "0.1.0",
+  "description": "X (Twitter) automation for Claude Code: 16 MCP tools v0.1 (read + write), 4-layer hybrid (xAI Grok + X API v2 + Apify + Patchright fallback). Free / Pro / Agency tiers via Stripe.",
+  "author": {
+    "name": "MaxVision Produtora",
+    "email": "produtoramaxvision@gmail.com",
+    "url": "https://produtoramaxvision.com.br"
+  },
+  "homepage": "https://x.produtoramaxvision.com.br",
+  "repository": "https://github.com/produtoramaxvision/maxvision-x-mcp",
+  "license": "AGPL-3.0",
+  "keywords": ["x", "twitter", "automation", "grok", "mcp", "patchright", "social-media"],
+  "mcpServers": {
+    "x-maxvision": {
+      "type": "http",
+      "url": "https://x-api.produtoramaxvision.com.br/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MAXVISION_API_KEY}",
+        "X-MaxVision-License": "${MAXVISION_LICENSE}"
+      }
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__x-maxvision__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__x-maxvision__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use.sh",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

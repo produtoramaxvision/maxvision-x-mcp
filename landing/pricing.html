@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pricing — MaxVision X Suite</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { accent: { 500: "#1d9bf0", 600: "#1a8cd8" } },
+            fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-black text-slate-100 font-sans antialiased">
+    <main class="min-h-screen px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-center mb-4">Pricing</h1>
+        <p class="text-center text-slate-300 mb-12">3 tiers · cancele a qualquer momento · BYOK suportado</p>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Free -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+            <h2 class="text-2xl font-bold mb-2">Free</h2>
+            <p class="text-4xl font-extrabold mb-4">$0<span class="text-base text-slate-400 font-normal">/mês</span></p>
+            <ul class="text-slate-300 text-sm space-y-2 mb-6">
+              <li>✓ 100 reads/mês (Grok x_search)</li>
+              <li>✓ 6 tools read-only</li>
+              <li>✗ Sem writes</li>
+              <li>✗ Sem DMs</li>
+            </ul>
+            <a href="https://github.com/produtoramaxvision/maxvision-x-mcp" class="block text-center px-5 py-2.5 rounded-lg border border-slate-700 hover:border-slate-500 transition">
+              Self-host (AGPL)
+            </a>
+          </div>
+
+          <!-- Pro -->
+          <div class="bg-slate-900/80 border-2 border-accent-500 rounded-xl p-6 relative">
+            <span class="absolute -top-3 right-4 bg-accent-500 text-black text-xs font-bold px-3 py-1 rounded-full">POPULAR</span>
+            <h2 class="text-2xl font-bold mb-2">Pro</h2>
+            <p class="text-4xl font-extrabold mb-4">$29<span class="text-base text-slate-400 font-normal">/mês</span></p>
+            <ul class="text-slate-300 text-sm space-y-2 mb-6">
+              <li>✓ 1k reads + 100 writes/mês</li>
+              <li>✓ 15 tools (read + write)</li>
+              <li>✓ post / reply / quote / like / follow</li>
+              <li>✗ Sem DMs automatizadas</li>
+            </ul>
+            <a href="https://buy.stripe.com/REPLACE_PRO_LINK" class="block text-center px-5 py-2.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-black font-semibold transition">
+              Assinar Pro
+            </a>
+          </div>
+
+          <!-- Agency -->
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+            <h2 class="text-2xl font-bold mb-2">Agency</h2>
+            <p class="text-4xl font-extrabold mb-4">$99<span class="text-base text-slate-400 font-normal">/mês</span></p>
+            <ul class="text-slate-300 text-sm space-y-2 mb-6">
+              <li>✓ 10k reads + 1k writes/mês</li>
+              <li>✓ Todos 16 tools (inclui DMs)</li>
+              <li>✓ Multi-account pool</li>
+              <li>✓ Priority support</li>
+            </ul>
+            <a href="https://buy.stripe.com/REPLACE_AGENCY_LINK" class="block text-center px-5 py-2.5 rounded-lg border border-slate-700 hover:border-slate-500 transition">
+              Assinar Agency
+            </a>
+          </div>
+        </div>
+
+        <p class="text-center text-xs text-slate-500 mt-12 max-w-2xl mx-auto">
+          Custos de upstream (xAI Grok ~$0.005/x_search, X API v2 pay-per-use, Apify $0.25/1k tweets)
+          são cobertos pela quota do tier. BYOK reduz custo se você trouxer suas próprias keys.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>
