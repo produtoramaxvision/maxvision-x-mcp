@@ -23,6 +23,7 @@ interface ApifyRunInput {
   tweetLanguage?: string;
   start?: string; // ISO date
   end?: string;
+  cookie?: string; // X auth cookie string e.g. "auth_token=xxx; ct0=yyy"
 }
 
 interface ApifyDataset {
@@ -92,9 +93,11 @@ export async function apifyUserTimeline(args: {
 export async function apifyConversationThread(args: {
   conversationId: string;
   maxItems?: number;
+  cookie?: string;
 }): Promise<unknown[]> {
   return apifyRunTweetScraper({
     conversationIds: [args.conversationId],
     maxItems: args.maxItems ?? 200,
+    ...(args.cookie && { cookie: args.cookie }),
   });
 }

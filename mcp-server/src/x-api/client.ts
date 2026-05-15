@@ -176,6 +176,21 @@ export interface XUser {
   verified?: boolean;
 }
 
+export async function xSearchConversation(
+  conversationId: string,
+  max = 100,
+): Promise<{ data: XPost[]; meta?: { newest_id: string; oldest_id: string; result_count: number; next_token?: string } }> {
+  return xApiRequest('/tweets/search/recent', {
+    query: {
+      query: `conversation_id:${conversationId}`,
+      max_results: Math.min(max, 100),
+      'tweet.fields': 'author_id,created_at,public_metrics,referenced_tweets,in_reply_to_user_id',
+      expansions: 'author_id',
+      'user.fields': 'username,name',
+    },
+  });
+}
+
 export async function xGetPost(id: string): Promise<{ data: XPost }> {
   return xApiRequest(`/tweets/${id}`, {
     query: {
