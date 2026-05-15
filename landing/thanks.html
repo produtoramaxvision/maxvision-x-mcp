@@ -1,44 +1,199 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="scroll-smooth">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Obrigado — MaxVision X Suite</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+    <title>Bem-vindo — MaxVision X Suite</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              accent: { 400: '#1d9bf0', 500: '#1d9bf0', 600: '#1a8cd8', 700: '#1271bd' },
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body { font-family: 'Inter', system-ui, sans-serif; }
+      .copy-btn { transition: all 0.15s; }
+      .copy-btn.copied { background: #10b981 !important; }
+    </style>
   </head>
-  <body class="bg-black text-slate-100 font-sans antialiased">
-    <main class="min-h-screen flex items-center justify-center px-6 py-16">
-      <section class="max-w-xl w-full text-center">
-        <h1 class="text-3xl md:text-4xl font-extrabold mb-4">Obrigado pela assinatura!</h1>
-        <p class="text-slate-300 mb-8">Sua chave de licença foi enviada por email e está pronta abaixo.</p>
+  <body class="min-h-screen bg-black text-slate-100 antialiased">
+    <header class="container mx-auto max-w-3xl px-6 py-6 flex items-center justify-between border-b border-slate-800">
+      <a href="/" class="text-xl font-bold tracking-tight">MaxVision <span class="text-accent-500">X</span></a>
+      <a href="/pricing.html" class="text-sm text-slate-400 hover:text-accent-500">← Pricing</a>
+    </header>
 
-        <div class="bg-slate-900/60 border border-slate-700 rounded-lg p-4 mb-6">
-          <p id="license-key" class="font-mono text-lg break-all">Carregando...</p>
+    <main class="container mx-auto max-w-3xl px-6 py-12">
+      <div id="loading" class="text-center py-16">
+        <div class="inline-block w-12 h-12 border-4 border-accent-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-4 text-slate-400">Aguardando webhook do Stripe processar sua compra…</p>
+        <p class="mt-1 text-sm text-slate-500">Leva 5–10 segundos. Não feche esta página.</p>
+      </div>
+
+      <div id="error" class="hidden bg-red-950/40 border border-red-800 rounded-2xl p-6 my-6">
+        <h2 class="font-bold text-red-400 mb-2">Algo deu errado</h2>
+        <p id="error-msg" class="text-red-300 text-sm"></p>
+        <p class="mt-4 text-sm text-slate-300">Sua compra foi processada, mas não conseguimos exibir a license aqui. Verifique seu email (incluindo spam) ou entre em contato:
+          <a href="mailto:produtoramaxvision@gmail.com" class="text-accent-500 underline">produtoramaxvision@gmail.com</a>
+        </p>
+      </div>
+
+      <div id="success" class="hidden">
+        <div class="bg-slate-900/60 rounded-2xl border border-slate-800 p-8">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-green-900/40 border border-green-700 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>
+            </div>
+            <h1 class="text-2xl font-extrabold">Bem-vindo ao MaxVision X <span id="tier-label" class="text-accent-500">Pro</span>!</h1>
+          </div>
+
+          <p class="text-slate-300 mb-2">Sua license key foi emitida com sucesso.</p>
+          <p class="text-sm text-slate-400 mb-6"><strong>Validade:</strong> até <span id="expires"></span></p>
+
+          <label class="block text-sm font-semibold mb-2 text-slate-200">1. License key (gating de tier)</label>
+          <div class="flex gap-2 mb-6">
+            <code id="license-key" class="flex-1 font-mono text-sm bg-black border border-slate-700 text-accent-400 px-4 py-3 rounded-lg overflow-x-auto select-all"></code>
+            <button id="copy-btn" class="copy-btn bg-accent-500 text-black px-4 rounded-lg hover:bg-accent-600 font-semibold text-sm">Copiar</button>
+          </div>
+
+          <div id="mcp-key-block" class="hidden">
+            <label class="block text-sm font-semibold mb-2 text-slate-200">2. MCP API key (auth do transport HTTP)</label>
+            <div class="flex gap-2 mb-8">
+              <code id="mcp-api-key" class="flex-1 font-mono text-sm bg-black border border-slate-700 text-accent-400 px-4 py-3 rounded-lg overflow-x-auto select-all"></code>
+              <button id="copy-mcp-btn" class="copy-btn bg-accent-500 text-black px-4 rounded-lg hover:bg-accent-600 font-semibold text-sm">Copiar</button>
+            </div>
+          </div>
+
+          <h2 class="text-xl font-bold mb-4 mt-4">Como começar</h2>
+          <ol class="space-y-4">
+            <li>
+              <p class="font-semibold text-slate-200">1. Adicionar o marketplace</p>
+              <pre class="bg-black border border-slate-800 px-3 py-2 rounded text-sm font-mono overflow-x-auto text-slate-300">/plugin marketplace add produtoramaxvision/maxvision-x-mcp</pre>
+            </li>
+            <li>
+              <p class="font-semibold text-slate-200">2. Instalar o plugin</p>
+              <pre class="bg-black border border-slate-800 px-3 py-2 rounded text-sm font-mono overflow-x-auto text-slate-300">/plugin install x-maxvision@maxvision-x</pre>
+            </li>
+            <li>
+              <p class="font-semibold text-slate-200">3. Configurar env vars (PowerShell Windows)</p>
+              <pre id="env-cmd-ps" class="bg-black border border-slate-800 px-3 py-2 rounded text-sm font-mono overflow-x-auto text-slate-300 whitespace-pre-wrap"></pre>
+              <p class="text-xs text-slate-500 mt-1">macOS/Linux: <code class="text-accent-500" id="env-cmd-bash"></code></p>
+            </li>
+            <li>
+              <p class="font-semibold text-slate-200">4. Reiniciar Claude Code completamente</p>
+              <pre class="bg-black border border-slate-800 px-3 py-2 rounded text-sm font-mono overflow-x-auto text-slate-300">Fechar todas janelas + reabrir (env vars novas não carregam em sessão ativa)</pre>
+            </li>
+            <li>
+              <p class="font-semibold text-slate-200">5. Validar setup</p>
+              <pre class="bg-black border border-slate-800 px-3 py-2 rounded text-sm font-mono overflow-x-auto text-slate-300">/x-status</pre>
+              <p class="text-xs text-slate-500 mt-1">Deve mostrar tier <span id="tier-status">pro</span> + 16 tools disponíveis.</p>
+            </li>
+          </ol>
+
+          <div class="mt-10 bg-accent-500/10 border border-accent-700/40 rounded-xl p-6">
+            <p class="font-semibold text-accent-400">📖 Documentação completa</p>
+            <p class="text-sm text-slate-300 mt-1">
+              <a class="underline hover:text-accent-500" href="https://github.com/produtoramaxvision/maxvision-x-mcp">GitHub repo</a> ·
+              <a class="underline hover:text-accent-500" href="https://x.produtoramaxvision.com.br">x.produtoramaxvision.com.br</a> ·
+              <a class="underline hover:text-accent-500" href="mailto:produtoramaxvision@gmail.com">Suporte email</a>
+            </p>
+          </div>
         </div>
-
-        <p class="text-sm text-slate-400 mb-6">Configure no seu Claude Code:</p>
-        <pre class="bg-slate-900/80 border border-slate-800 rounded-lg p-4 text-left text-xs overflow-x-auto"><code>[Environment]::SetEnvironmentVariable("MAXVISION_LICENSE", "&lt;chave acima&gt;", "User")</code></pre>
-
-        <p class="text-xs text-slate-500 mt-8">Reinicie o Claude Code após setar a env var.</p>
-      </section>
+      </div>
     </main>
+
+    <footer class="container mx-auto max-w-3xl px-6 py-12 text-sm text-slate-500 border-t border-slate-800">
+      © 2026 Produtora MaxVision · <a href="/" class="hover:text-accent-500">x.produtoramaxvision.com.br</a>
+    </footer>
 
     <script>
       const params = new URLSearchParams(window.location.search);
-      const session = params.get("session_id");
-      if (session) {
-        fetch(`https://x-license.produtoramaxvision.com.br/v1/license-by-session?session=${encodeURIComponent(session)}`)
-          .then((r) => r.json())
-          .then((d) => {
-            document.getElementById("license-key").textContent = d.licenseKey || "Licença ainda sendo emitida — verifique seu email.";
-          })
-          .catch(() => {
-            document.getElementById("license-key").textContent = "Erro ao buscar — verifique seu email.";
-          });
-      } else {
-        document.getElementById("license-key").textContent = "Verifique seu email.";
+      // Accept BOTH `session` (LinkedIn-style) and `session_id` (Stripe-default
+      // success_url placeholder {CHECKOUT_SESSION_ID}). Stripe sends session_id;
+      // some custom links use session.
+      const sessionId = params.get('session') || params.get('session_id');
+      const $loading = document.getElementById('loading');
+      const $success = document.getElementById('success');
+      const $error = document.getElementById('error');
+      const $errorMsg = document.getElementById('error-msg');
+
+      async function fetchLicense(retry = 0) {
+        if (!sessionId) {
+          $loading.classList.add('hidden');
+          $error.classList.remove('hidden');
+          $errorMsg.textContent = 'Sessão Stripe não fornecida na URL. Acesse /pricing.html para iniciar uma compra.';
+          return;
+        }
+        try {
+          const res = await fetch(`/api/license-fetch?session=${encodeURIComponent(sessionId)}`);
+          const data = await res.json();
+          if (res.status === 404 && data.error === 'not_found_yet' && retry < 12) {
+            setTimeout(() => fetchLicense(retry + 1), 5000);
+            return;
+          }
+          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+          $loading.classList.add('hidden');
+          $success.classList.remove('hidden');
+          const tier = data.tier === 'agency' ? 'Agency' : 'Pro';
+          document.getElementById('tier-label').textContent = tier;
+          document.getElementById('tier-status').textContent = data.tier || 'pro';
+          document.getElementById('license-key').textContent = data.licenseKey;
+          document.getElementById('expires').textContent = new Date(data.expiresAt).toLocaleDateString('pt-BR');
+
+          const apiKey = data.mcpApiKey || '';
+          if (apiKey) {
+            document.getElementById('mcp-key-block').classList.remove('hidden');
+            document.getElementById('mcp-api-key').textContent = apiKey;
+          }
+          const apiKeyDisplay = apiKey || '<sua-api-key>';
+          document.getElementById('env-cmd-ps').textContent =
+            `[Environment]::SetEnvironmentVariable("MAXVISION_API_KEY", "${apiKeyDisplay}", "User")\n` +
+            `[Environment]::SetEnvironmentVariable("MAXVISION_LICENSE", "${data.licenseKey}", "User")`;
+          document.getElementById('env-cmd-bash').textContent =
+            `export MAXVISION_API_KEY=${apiKeyDisplay} MAXVISION_LICENSE=${data.licenseKey}`;
+        } catch (err) {
+          $loading.classList.add('hidden');
+          $error.classList.remove('hidden');
+          $errorMsg.textContent = err.message;
+        }
       }
+      fetchLicense();
+
+      function attachCopy(buttonId, sourceId) {
+        document.getElementById(buttonId).addEventListener('click', async (e) => {
+          const val = document.getElementById(sourceId).textContent;
+          try {
+            await navigator.clipboard.writeText(val);
+            e.target.textContent = '✓ Copiado!';
+            e.target.classList.add('copied');
+            setTimeout(() => {
+              e.target.textContent = 'Copiar';
+              e.target.classList.remove('copied');
+            }, 2000);
+          } catch {
+            alert('Erro ao copiar. Selecione manualmente.');
+          }
+        });
+      }
+      attachCopy('copy-btn', 'license-key');
+      attachCopy('copy-mcp-btn', 'mcp-api-key');
     </script>
   </body>
 </html>
