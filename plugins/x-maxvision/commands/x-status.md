@@ -9,7 +9,7 @@ Você está verificando a saúde da conexão MCP X.
 # Workflow
 
 1. Chame `x_get_user_profile { username: "x" }` (handle oficial).
-2. Se erro 401 → license inválida ou MAXVISION_API_KEY ausente; oriente como setar.
+2. Se erro 401 → license inválida ou X_MAXVISION_API_KEY ausente; oriente como setar.
 3. Se erro 429 → rate-limit; reporte quando voltar.
 4. Se OK → reporte:
    - Versão MCP (extrair do `/health`)

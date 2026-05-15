@@ -13,8 +13,8 @@ Plugin Claude Code + MCP server remoto (HTTP). Sem n8n.
 ### Windows (PowerShell)
 
 ```powershell
-[Environment]::SetEnvironmentVariable("MAXVISION_API_KEY", "mxv_xxxx", "User")
-[Environment]::SetEnvironmentVariable("MAXVISION_LICENSE", "MAXV-X-PRO-...", "User")
+[Environment]::SetEnvironmentVariable("X_MAXVISION_API_KEY", "mxv_xxxx", "User")
+[Environment]::SetEnvironmentVariable("X_MAXVISION_LICENSE", "MAXV-X-PRO-...", "User")
 ```
 
 Fechar e reabrir o terminal.
@@ -22,8 +22,8 @@ Fechar e reabrir o terminal.
 ### macOS / Linux
 
 ```bash
-echo 'export MAXVISION_API_KEY=mxv_xxxx' >> ~/.zshrc
-echo 'export MAXVISION_LICENSE=MAXV-X-PRO-xxxx' >> ~/.zshrc
+echo 'export X_MAXVISION_API_KEY=mxv_xxxx' >> ~/.zshrc
+echo 'export X_MAXVISION_LICENSE=MAXV-X-PRO-xxxx' >> ~/.zshrc
 source ~/.zshrc
 ```
 

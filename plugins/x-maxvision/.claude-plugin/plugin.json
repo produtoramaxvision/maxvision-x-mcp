@@ -16,8 +16,8 @@
       "type": "http",
       "url": "https://x-api.produtoramaxvision.com.br/mcp",
       "headers": {
-        "Authorization": "Bearer ${MAXVISION_API_KEY}",
-        "X-MaxVision-License": "${MAXVISION_LICENSE}"
+        "Authorization": "Bearer ${X_MAXVISION_API_KEY}",
+        "X-MaxVision-License": "${X_MAXVISION_LICENSE}"
       }
     }
   },

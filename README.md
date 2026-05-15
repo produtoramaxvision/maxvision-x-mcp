@@ -11,10 +11,10 @@ X (Twitter) automation for Claude Code: 16 MCP tools v0.1 (read + write), 4-laye
 #    Email produtoramaxvision@gmail.com — you receive mxv_<48hex>
 
 # 2. Set env (Windows PowerShell)
-[Environment]::SetEnvironmentVariable("MAXVISION_API_KEY", "mxv_xxxx", "User")
+[Environment]::SetEnvironmentVariable("X_MAXVISION_API_KEY", "mxv_xxxx", "User")
 
 # 3. (Optional) Pro license
-[Environment]::SetEnvironmentVariable("MAXVISION_LICENSE", "MAXV-PRO-...", "User")
+[Environment]::SetEnvironmentVariable("X_MAXVISION_LICENSE", "MAXV-PRO-...", "User")
 
 # 4. Install
 claude /plugin install produtoramaxvision/maxvision-x-mcp

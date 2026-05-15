@@ -9,17 +9,17 @@ X (Twitter) automation: 16 MCP tools v0.1, 8 commands, 4 agents, 5 skills, 3 hoo
 1. Get an API key (email `produtoramaxvision@gmail.com` — receive `mxv_<48hex>`).
 2. Set env (Windows PowerShell):
    ```powershell
-   [Environment]::SetEnvironmentVariable("MAXVISION_API_KEY", "mxv_xxxx", "User")
+   [Environment]::SetEnvironmentVariable("X_MAXVISION_API_KEY", "mxv_xxxx", "User")
    ```
    (close + reopen terminal after)
    - macOS/Linux:
    ```bash
-   echo 'export MAXVISION_API_KEY=mxv_xxxx' >> ~/.zshrc
+   echo 'export X_MAXVISION_API_KEY=mxv_xxxx' >> ~/.zshrc
    source ~/.zshrc
    ```
 3. (Optional) Pro license:
    ```powershell
-   [Environment]::SetEnvironmentVariable("MAXVISION_LICENSE", "MAXV-X-PRO-...", "User")
+   [Environment]::SetEnvironmentVariable("X_MAXVISION_LICENSE", "MAXV-X-PRO-...", "User")
    ```
 4. Install plugin:
    ```bash

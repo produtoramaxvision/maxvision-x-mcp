@@ -164,10 +164,10 @@
           }
           const apiKeyDisplay = apiKey || '<sua-api-key>';
           document.getElementById('env-cmd-ps').textContent =
-            `[Environment]::SetEnvironmentVariable("MAXVISION_API_KEY", "${apiKeyDisplay}", "User")\n` +
-            `[Environment]::SetEnvironmentVariable("MAXVISION_LICENSE", "${data.licenseKey}", "User")`;
+            `[Environment]::SetEnvironmentVariable("X_MAXVISION_API_KEY", "${apiKeyDisplay}", "User")\n` +
+            `[Environment]::SetEnvironmentVariable("X_MAXVISION_LICENSE", "${data.licenseKey}", "User")`;
           document.getElementById('env-cmd-bash').textContent =
-            `export MAXVISION_API_KEY=${apiKeyDisplay} MAXVISION_LICENSE=${data.licenseKey}`;
+            `export X_MAXVISION_API_KEY=${apiKeyDisplay} X_MAXVISION_LICENSE=${data.licenseKey}`;
         } catch (err) {
           $loading.classList.add('hidden');
           $error.classList.remove('hidden');

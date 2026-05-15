@@ -186,9 +186,9 @@ ${mcpApiKeyBlock}
       <pre style="background:#0f172a;color:#e2e8f0;padding:8px 12px;border-radius:6px;font-size:12px;margin-top:4px">/plugin install x-maxvision@maxvision-x</pre>
     </li>
     <li>Configure as env vars (PowerShell Windows):
-      <pre style="background:#0f172a;color:#e2e8f0;padding:8px 12px;border-radius:6px;font-size:12px;margin-top:4px;white-space:pre-wrap">[Environment]::SetEnvironmentVariable("MAXVISION_API_KEY", "${mcpApiKey || '<sua-api-key>'}", "User")
-[Environment]::SetEnvironmentVariable("MAXVISION_LICENSE", "${licenseKey}", "User")</pre>
-      <p style="color:#94a3b8;font-size:12px">macOS/Linux: <code style="color:#1d9bf0">export MAXVISION_API_KEY=${mcpApiKey || '<sua-api-key>'}</code></p>
+      <pre style="background:#0f172a;color:#e2e8f0;padding:8px 12px;border-radius:6px;font-size:12px;margin-top:4px;white-space:pre-wrap">[Environment]::SetEnvironmentVariable("X_MAXVISION_API_KEY", "${mcpApiKey || '<sua-api-key>'}", "User")
+[Environment]::SetEnvironmentVariable("X_MAXVISION_LICENSE", "${licenseKey}", "User")</pre>
+      <p style="color:#94a3b8;font-size:12px">macOS/Linux: <code style="color:#1d9bf0">export X_MAXVISION_API_KEY=${mcpApiKey || '<sua-api-key>'}</code></p>
     </li>
     <li>Reinicie o Claude Code completamente</li>
     <li>Teste: <code style="color:#1d9bf0">/x-status</code></li>
@@ -250,7 +250,7 @@ async function sendLicenseWhatsApp(
     `*Como usar:*\n` +
     `1. /plugin marketplace add produtoramaxvision/maxvision-x-mcp\n` +
     `2. /plugin install x-maxvision@maxvision-x\n` +
-    `3. Setar env vars MAXVISION_API_KEY + MAXVISION_LICENSE\n` +
+    `3. Setar env vars X_MAXVISION_API_KEY + X_MAXVISION_LICENSE\n` +
     `4. Reiniciar Claude Code\n` +
     `5. /x-status p/ validar\n\n` +
     `📖 https://x.produtoramaxvision.com.br\n` +

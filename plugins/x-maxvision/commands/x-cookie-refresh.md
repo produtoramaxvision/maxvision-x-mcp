@@ -16,7 +16,7 @@ Você está orientando o usuário a renovar o cookie `auth_token` para automaç�
 3. Enviar para o MCP server via POST `/admin/account-cookie`:
    ```bash
    curl -X POST https://x-api.produtoramaxvision.com.br/admin/account-cookie \
-     -H "Authorization: Bearer $MAXVISION_API_KEY" \
+     -H "Authorization: Bearer $X_MAXVISION_API_KEY" \
      -H "content-type: application/json" \
      -d '{
        "accountId": "default",
