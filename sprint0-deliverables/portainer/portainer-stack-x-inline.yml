@@ -1,0 +1,196 @@
+# ============================================================
+# MaxVision X MCP — Portainer Stack INLINE — v0.1.0 (Oracle VPS arm64)
+# Pré-preenchido para VPS oracle.produtoramaxvision.com.br (163.176.241.144)
+# Domain: x-api.produtoramaxvision.com.br (DNS-only/gray no Cloudflare)
+#
+# DEPLOY: Portainer → Stacks → Add stack → name "maxvision-x-mcp" →
+#         cole este YAML → Deploy. SEM env vars adicionais (tudo inline).
+#
+# ⚠ ANTES DE COLAR: substituir 4 placeholders X-specific:
+#   1. XAI_API_KEY=REPLACE_ME_XAI         → sua key xai-...
+#   2. X_API_BEARER_TOKEN=REPLACE_ME      → App-Only Bearer X API v2
+#   3. X_API_CLIENT_ID=REPLACE_ME         → OAuth 2.0 PKCE Client ID
+#   4. X_API_CLIENT_SECRET=REPLACE_ME     → OAuth 2.0 PKCE Client Secret
+#
+# Se LLM_PROVIDER=openrouter (default abaixo) E você for usar SÓ Grok via OpenRouter,
+# XAI_API_KEY pode ficar REPLACE_ME (não é consultada).
+#
+# Secrets gerados 2026-05-14 (rotacionar antes de v1.0):
+#   - POSTGRES_PASSWORD, MASTER_KEY, WEBHOOK_SECRET, MCP_API_KEYS = openssl rand
+# ============================================================
+version: "3.9"
+
+services:
+  mcp-server:
+    image: ghcr.io/produtoramaxvision/maxvision-x-mcp:latest
+    init: true
+    stop_grace_period: 90s
+    shm_size: 2gb
+    entrypoint:
+      - sh
+      - -c
+      - 'rm -f /data/profiles/*/SingletonLock /data/profiles/*/SingletonCookie /data/profiles/*/SingletonSocket 2>/dev/null || true; exec dumb-init -- xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24 -ac +extension GLX +render -noreset" node dist/server.js'
+    environment:
+      NODE_ENV: production
+      MCP_TRANSPORT: http
+      MCP_PORT: "3000"
+      LOG_LEVEL: info
+      DATABASE_URL: postgres://mcp:6c8bc78573b8bff93a9e538d3e679c7c5c03420c6214f07a@x_mcp_postgres:5432/x_mcp
+      REDIS_URL: redis://x_mcp_redis:6379
+      MASTER_KEY: 39c1d98e886e4adff0f4dea3edc3e934818a109cd0ba8639b668e27fb7262256
+      MCP_API_KEYS: mxv_338a80fa35cd318c47f7f57e69bf14dc9e9549e285013989,mxv_b9924fadf19fec07aa238d4589aa07d54e656ed3bdcf84c2,mxv_7a31eb67dd0e305198ddccd75ecafed99ccc6eb5f4e41030
+      RATE_LIMIT_PER_MINUTE: "10"
+      PROFILE_BASE_DIR: /data/profiles
+      TZ: America/Sao_Paulo
+      # ========= LLM provider (Layer A — Grok via OpenRouter default) =========
+      LLM_PROVIDER: openrouter
+      LLM_MODEL: x-ai/grok-4.1-fast
+      OPENROUTER_API_KEY: REPLACE_ME_OPENROUTER_KEY
+      XAI_API_KEY: REPLACE_ME_XAI
+      # ========= X API v2 (Layer B writes + cirurgical reads) =========
+      X_API_BEARER_TOKEN: REPLACE_ME_X_API_BEARER
+      X_API_CLIENT_ID: REPLACE_ME_X_API_CLIENT_ID
+      X_API_CLIENT_SECRET: REPLACE_ME_X_API_CLIENT_SECRET
+      # ========= Apify (Layer C bulk reads) =========
+      APIFY_API_TOKEN: REPLACE_ME_APIFY_TOKEN
+      APIFY_X_TWEET_SCRAPER_ACTOR: apidojo~tweet-scraper
+      # ========= Patchright (Layer D fallback ToS-grey) =========
+      PATCHRIGHT_HEADLESS: "true"
+      SCRAPING_BACKEND: patchright
+      PATCHRIGHT_PROXY_URL: http://brd.superproxy.io:33335
+      PATCHRIGHT_PROXY_USERNAME: brd-customer-hl_ceb7cc08-zone-maxv_linkedin_unlocker
+      PATCHRIGHT_PROXY_PASSWORD: REPLACE_ME_BRIGHTDATA_ZONE_PASSWORD
+      # ========= License gating =========
+      LICENSE_CHECK_ENABLED: "true"
+      LICENSE_SERVER_URL: https://x-license.produtoramaxvision.com.br
+      # ========= Webhooks (n8n hybrid Variant B) =========
+      ENABLE_WEBHOOKS: "true"
+      WEBHOOK_SECRET: 4c2c54d68db83a55fb5b8ffd4582caad2e83703b7267c052aecefb781a9443e5
+    volumes:
+      - x_mcp_profiles_data:/data/profiles
+    networks:
+      - net
+      - x_mcp_internal
+    depends_on:
+      - x_mcp_postgres
+      - x_mcp_redis
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 15s
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 5
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=net"
+        - "traefik.http.routers.x-mcp-server.rule=Host(`x-api.produtoramaxvision.com.br`)"
+        - "traefik.http.routers.x-mcp-server.entrypoints=websecure"
+        - "traefik.http.routers.x-mcp-server.tls=true"
+        - "traefik.http.routers.x-mcp-server.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.x-mcp-server.loadbalancer.server.port=3000"
+
+  x_mcp_postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mcp
+      POSTGRES_PASSWORD: 6c8bc78573b8bff93a9e538d3e679c7c5c03420c6214f07a
+      POSTGRES_DB: x_mcp
+      TZ: America/Sao_Paulo
+    volumes:
+      - x_mcp_postgres_data:/var/lib/postgresql/data
+    networks:
+      - x_mcp_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp -d x_mcp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 15s
+        max_attempts: 5
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  x_mcp_redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - x_mcp_redis_data:/data
+    networks:
+      - x_mcp_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 5
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
+volumes:
+  x_mcp_postgres_data:
+  x_mcp_redis_data:
+  x_mcp_profiles_data:
+
+networks:
+  net:
+    external: true
+  x_mcp_internal:
+    driver: overlay
+    attachable: true
