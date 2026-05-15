@@ -6,7 +6,7 @@ import { xSearch } from '../grok/client.js';
 const tool = withInstrumentation<z.infer<typeof XSearchPostsInput>, unknown>({
   name: 'x_search_posts',
   description:
-    'Search X posts via xAI Grok x_search (Layer A). Returns Grok response with tool_calls.',
+    'Search X posts via xAI Grok x_search (Layer A). Returns real-time X posts in grokResponse.',
   inputSchema: XSearchPostsInput,
   async handler({ input }) {
     const result = await xSearch({

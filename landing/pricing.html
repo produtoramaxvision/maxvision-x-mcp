@@ -115,7 +115,21 @@
         </article>
       </section>
 
-      <section class="mt-16 text-center text-sm text-slate-400 max-w-2xl mx-auto">
+      <!-- Teste R$1 -->
+      <section class="mt-12 flex justify-center">
+        <div class="bg-slate-900/60 border border-accent-500/40 rounded-xl p-6 max-w-md w-full text-center">
+          <span class="inline-block bg-accent-500/10 text-accent-400 text-xs font-bold px-3 py-1 rounded-full mb-3 uppercase tracking-wide">Validação Técnica</span>
+          <h3 class="text-lg font-bold text-white">Teste o fluxo completo por R$1</h3>
+          <p class="mt-2 text-sm text-slate-400">Pagamento único de R$1. Você recebe uma license key Pro válida por 7 dias para validar o plugin, email e MCP antes de assinar.</p>
+          <p class="mt-1 text-xs text-slate-500">Sem assinatura. Cobrança única.</p>
+          <a data-tier="test" data-price-id="price_1TXHJ9Ad1djWBWMQ7IRZD8yN" href="#stripe-checkout"
+             class="js-checkout-test mt-5 inline-block bg-slate-800 hover:bg-accent-500/20 border border-accent-500/50 hover:border-accent-500 text-accent-400 hover:text-accent-300 py-2.5 px-8 rounded-lg font-semibold text-sm transition-colors">
+            Testar por R$1
+          </a>
+        </div>
+      </section>
+
+      <section class="mt-10 text-center text-sm text-slate-400 max-w-2xl mx-auto">
         <p>
           Trocar de plano a qualquer momento. Cancele sem multa. Pagamento via Stripe (cartão internacional).
           Custos de upstream (xAI Grok ~$0.005/x_search, X API v2 pay-per-use, Apify $0.25/1k tweets) cobertos pela quota do tier.
@@ -174,6 +188,36 @@
         });
       });
 
+      async function doCheckout(priceId, tier) {
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ priceId, tier }),
+        });
+        if (!res.ok) {
+          const errBody = await res.text();
+          throw new Error(`Stripe API ${res.status}: ${errBody.slice(0, 200)}`);
+        }
+        const { url } = await res.json();
+        window.location.href = url;
+      }
+
+      document.querySelectorAll('.js-checkout-test').forEach((el) => {
+        el.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const priceId = el.dataset.priceId;
+          const originalText = el.textContent;
+          el.textContent = 'Redirecionando…';
+          try {
+            await doCheckout(priceId, 'test');
+          } catch (err) {
+            console.error('checkout error', err);
+            alert(`Erro ao iniciar checkout: ${err.message}`);
+            el.textContent = originalText;
+          }
+        });
+      });
+
       document.querySelectorAll('.js-checkout').forEach((el) => {
         el.addEventListener('click', async (e) => {
           e.preventDefault();
@@ -186,17 +230,7 @@
           const originalText = el.textContent;
           el.textContent = 'Redirecionando…';
           try {
-            const res = await fetch('/api/checkout', {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ priceId, tier, period: currentPeriod }),
-            });
-            if (!res.ok) {
-              const errBody = await res.text();
-              throw new Error(`Stripe API ${res.status}: ${errBody.slice(0, 200)}`);
-            }
-            const { url } = await res.json();
-            window.location.href = url;
+            await doCheckout(priceId, tier);
           } catch (err) {
             console.error('checkout error', err);
             alert(`Erro ao iniciar checkout: ${err.message}`);

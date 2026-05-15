@@ -16,7 +16,7 @@ interface Env {
 
 interface CheckoutBody {
   priceId: string;
-  tier: 'pro' | 'agency';
+  tier: 'pro' | 'agency' | 'test';
   period?: 'monthly' | 'yearly';
 }
 
@@ -46,23 +46,27 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   if (!body.priceId || !/^price_/.test(body.priceId)) {
     return json(400, { error: 'invalid_priceId' });
   }
-  if (body.tier !== 'pro' && body.tier !== 'agency') {
+  if (body.tier !== 'pro' && body.tier !== 'agency' && body.tier !== 'test') {
     return json(400, { error: 'invalid_tier' });
   }
   const secret = ctx.env.STRIPE_SECRET_KEY;
   if (!secret) return json(500, { error: 'stripe_not_configured' });
 
+  const isTest = body.tier === 'test';
+  const workerTier = isTest ? 'pro' : body.tier;
+  const expiresInDays = isTest ? '7' : body.period === 'yearly' ? '365' : '31';
+
   const params = new URLSearchParams();
-  params.set('mode', 'subscription');
+  params.set('mode', isTest ? 'payment' : 'subscription');
   params.set('line_items[0][price]', body.priceId);
   params.set('line_items[0][quantity]', '1');
   params.set('success_url', 'https://x.produtoramaxvision.com.br/thanks.html?session={CHECKOUT_SESSION_ID}');
   params.set('cancel_url', 'https://x.produtoramaxvision.com.br/pricing.html');
-  params.set('metadata[tier]', body.tier);
-  params.set('metadata[expires_in_days]', body.period === 'yearly' ? '365' : '31');
+  params.set('metadata[tier]', workerTier);
+  params.set('metadata[expires_in_days]', expiresInDays);
   params.set('locale', 'pt-BR');
   params.set('billing_address_collection', 'required');
-  params.set('phone_number_collection[enabled]', 'true');
+  if (!isTest) params.set('phone_number_collection[enabled]', 'true');
 
   const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
     method: 'POST',

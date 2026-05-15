@@ -13,7 +13,7 @@ import { logger } from '../logger.js';
 import { AppError } from '../errors.js';
 import { db } from '../db/client.js';
 import { oauthTokens } from '../db/schema.js';
-import { decryptCookie } from '../auth/cookies.js';
+import { decryptCookie, encryptCookie } from '../auth/cookies.js';
 import { eq } from 'drizzle-orm';
 
 const X_API_BASE = 'https://api.x.com/2';
@@ -23,6 +23,47 @@ interface XApiOptions {
   body?: unknown;
   accountId?: string; // For user-context endpoints; omits = App-Only Bearer
   query?: Record<string, string | number | undefined>;
+}
+
+async function refreshAccessToken(
+  accountId: string,
+  refreshTokenEncrypted: Buffer,
+): Promise<string> {
+  const clientId = env.X_API_CLIENT_ID;
+  const clientSecret = env.X_API_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new AppError('CONFIG_FAIL', 'X_API_CLIENT_ID/SECRET required for token refresh');
+  }
+  const refreshToken = decryptCookie(refreshTokenEncrypted);
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+  const res = await fetch('https://api.x.com/2/oauth2/token', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      authorization: `Basic ${credentials}`,
+    },
+    body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken, client_id: clientId }).toString(),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    logger.error({ status: res.status, accountId, body: body.slice(0, 200) }, 'oauth_refresh_fail');
+    throw new AppError('AUTH_FAIL', `Token refresh failed (${res.status}). Re-authorize via /x-oauth-connect.`);
+  }
+  const json = (await res.json()) as {
+    access_token: string;
+    refresh_token?: string;
+    expires_in: number;
+    scope: string;
+  };
+  const expiresAt = new Date(Date.now() + json.expires_in * 1000);
+  const accessEnc = encryptCookie(json.access_token);
+  const refreshEnc = json.refresh_token ? encryptCookie(json.refresh_token) : refreshTokenEncrypted;
+  await db
+    .update(oauthTokens)
+    .set({ accessToken: accessEnc, refreshToken: refreshEnc, expiresAt, updatedAt: new Date() })
+    .where(eq(oauthTokens.accountId, accountId));
+  logger.info({ accountId, expiresAt }, 'oauth_token_refreshed');
+  return json.access_token;
 }
 
 async function getAccessToken(accountId: string): Promise<string> {
@@ -38,11 +79,15 @@ async function getAccessToken(accountId: string): Promise<string> {
       `No OAuth token for account "${accountId}". Run /x-oauth-connect first.`,
     );
   }
-  if (new Date(tok.expiresAt) < new Date()) {
-    throw new AppError(
-      'AUTH_FAIL',
-      `OAuth token expired at ${tok.expiresAt.toISOString()}. Re-authorize.`,
-    );
+  // Refresh proactively 5 minutes before expiry
+  if (new Date(tok.expiresAt).getTime() - Date.now() < 5 * 60 * 1000) {
+    if (!tok.refreshToken) {
+      throw new AppError(
+        'AUTH_FAIL',
+        `OAuth token expired at ${tok.expiresAt.toISOString()} and no refresh token available. Re-authorize via /x-oauth-connect.`,
+      );
+    }
+    return refreshAccessToken(accountId, tok.refreshToken);
   }
   return decryptCookie(tok.accessToken);
 }

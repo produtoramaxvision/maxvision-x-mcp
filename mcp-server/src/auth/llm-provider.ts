@@ -1,19 +1,18 @@
 /**
  * Multi-provider LLM client — `LlmProvider` abstraction.
  *
- * 2 providers supported (T2 decision Sprint 1):
+ * 2 providers supported:
  *   - `grok` — direct xAI API (default — native x_search tool, lowest latency)
  *   - `openrouter` — passthrough Grok via OpenRouter (multi-model fallback)
  *
  * Selection via env `LLM_PROVIDER=grok|openrouter` (defaults to `grok`).
- * Override model via `LLM_MODEL` (e.g. `grok-4-1-fast-non-reasoning`).
+ * Override model via `LLM_MODEL` (e.g. `grok-4.3`).
  *
- * Both providers expose:
- *   - chat completion with optional tools (function calling)
- *   - x_search native tool (Grok direct) or passthrough (OpenRouter w/ tools)
+ * invokeLlm() → Chat Completions API (/v1/chat/completions) — function calling
+ * xSearch()   → Responses API (/v1/responses) — native x_search server-side tool
  *
- * For semantic post search use `xSearch()` (calls Grok with `x_search` tool
- * registered). For free-form LLM use `invokeLlm()`.
+ * xAI Responses API (2026): x_search filters are FLAT in the tool object,
+ * not nested. Response text is in output[].content[].text (type: output_text).
  */
 import { env } from '../env.js';
 import { logger } from '../logger.js';
@@ -29,15 +28,19 @@ interface ProviderConfig {
 }
 
 const DEFAULT_MODELS: Record<Provider, string> = {
-  // xAI Grok 4.1 Fast (non-reasoning) — replaces `grok-4-fast` deprecated 2026-05-15
-  grok: 'grok-4-1-fast-non-reasoning',
-  openrouter: 'x-ai/grok-4.1-fast',
+  // grok-4-1-fast deprecated 2026-05-15 → grok-4.3 is current recommended fast model
+  grok: 'grok-4.3',
+  openrouter: 'x-ai/grok-4.3',
 };
 
 const ENDPOINTS: Record<Provider, string> = {
   grok: 'https://api.x.ai/v1/chat/completions',
   openrouter: 'https://openrouter.ai/api/v1/chat/completions',
 };
+
+// xAI Responses API — used by xSearch() for native x_search tool
+const XAI_RESPONSES_ENDPOINT = 'https://api.x.ai/v1/responses';
+const XAI_RESPONSES_DEFAULT_MODEL = 'grok-4.3';
 
 function resolveProvider(): ProviderConfig {
   const explicit = env.LLM_PROVIDER;
@@ -165,10 +168,17 @@ export async function invokeLlm(args: LlmInvokeArgs): Promise<LlmResponse> {
 }
 
 /**
- * Convenience wrapper to invoke Grok with native `x_search` tool registered.
- * Used by Layer A read tools (x_search_posts, x_profile_activity).
+ * Calls xAI Grok via the Responses API with the native x_search tool.
  *
- * Returns the raw Grok response — caller parses tool_calls + x_search results.
+ * Uses /v1/responses (not /v1/chat/completions) — xAI moved x_search to the
+ * Responses API in 2026. Chat Completions had live_search (now deprecated).
+ *
+ * Wire format: filters are FLAT in the tool object (not nested):
+ *   { type: "x_search", allowed_x_handles: [...], from_date: "..." }
+ *
+ * Response is in output[].content[].text (type: "output_text"), not choices[].
+ *
+ * Always calls xAI directly — OpenRouter doesn't forward xAI-specific tools.
  */
 export async function xSearch(args: {
   query: string;
@@ -176,40 +186,60 @@ export async function xSearch(args: {
   excludedHandles?: string[];
   fromDate?: string;
   toDate?: string;
-  mode?: 'on' | 'off' | 'auto';
 }): Promise<LlmResponse> {
-  const tools = [
-    {
-      type: 'function' as const,
-      function: {
-        name: 'x_search',
-        description: 'Search posts on X (Twitter). Use for any X-specific content lookup.',
-        parameters: {
-          type: 'object',
-          properties: {
-            query: { type: 'string' },
-            allowed_x_handles: { type: 'array', items: { type: 'string' } },
-            excluded_x_handles: { type: 'array', items: { type: 'string' } },
-            from_date: { type: 'string', description: 'YYYY-MM-DD' },
-            to_date: { type: 'string', description: 'YYYY-MM-DD' },
-          },
-          required: ['query'],
-        },
-      },
-    },
-  ];
+  const apiKey = env.XAI_API_KEY;
+  if (!apiKey) {
+    throw new AppError('CONFIG_FAIL', 'XAI_API_KEY required for x_search (Layer A)');
+  }
 
-  const params = {
-    query: args.query,
-    ...(args.allowedHandles && { allowed_x_handles: args.allowedHandles }),
-    ...(args.excludedHandles && { excluded_x_handles: args.excludedHandles }),
-    ...(args.fromDate && { from_date: args.fromDate }),
-    ...(args.toDate && { to_date: args.toDate }),
+  // Filters are flat in the Responses API tool object.
+  const xSearchTool: Record<string, unknown> = { type: 'x_search' };
+  if (args.allowedHandles?.length) xSearchTool['allowed_x_handles'] = args.allowedHandles;
+  if (args.excludedHandles?.length) xSearchTool['excluded_x_handles'] = args.excludedHandles;
+  if (args.fromDate) xSearchTool['from_date'] = args.fromDate;
+  if (args.toDate) xSearchTool['to_date'] = args.toDate;
+
+  const model = env.LLM_MODEL ?? XAI_RESPONSES_DEFAULT_MODEL;
+
+  const body = {
+    model,
+    input: [{ role: 'user', content: args.query }],
+    tools: [xSearchTool],
   };
 
-  return invokeLlm({
-    userPrompt: `Use x_search with parameters: ${JSON.stringify(params)}`,
-    tools,
-    temperature: 0,
+  logger.info(
+    { model, query: args.query.slice(0, 80), tool: xSearchTool },
+    'x_search_responses_api',
+  );
+
+  const res = await fetch(XAI_RESPONSES_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
   });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new AppError(
+      'EXTERNAL_API_FAIL',
+      `grok Responses API ${res.status}: ${errBody.slice(0, 300)}`,
+      { provider: 'grok', status: res.status },
+    );
+  }
+
+  const json = (await res.json()) as Record<string, unknown>;
+
+  // Responses API: output[{type:"message", content:[{type:"output_text", text:"..."}]}]
+  const output = json['output'] as Array<{
+    type?: string;
+    content?: Array<{ type?: string; text?: string }>;
+  }> | undefined;
+  const message = output?.find(o => o.type === 'message');
+  const textContent = message?.content?.find(c => c.type === 'output_text');
+  const text = textContent?.text ?? '';
+
+  return { text, raw: json };
 }
