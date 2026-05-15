@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-marketplace.json",
+  "name": "maxvision-x",
+  "description": "MaxVision X (Twitter) Suite — 16 X automation tools v0.1 via hosted MCP server. Grok x_search + X API v2 + Apify + Patchright (4-layer hybrid).",
+  "version": "0.1.0",
+  "owner": {
+    "name": "MaxVision Produtora",
+    "email": "produtoramaxvision@gmail.com",
+    "url": "https://produtoramaxvision.com.br"
+  },
+  "metadata": {
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "x-maxvision",
+      "source": "./plugins/x-maxvision",
+      "description": "X (Twitter) automation suite: 16 tools v0.1 (x_search_posts, x_search_users, x_get_post, x_get_user_profile, x_get_user_timeline, x_get_followers, x_get_following, x_get_replies_tree, x_post_metrics, x_profile_activity, x_post_tweet, x_reply, x_quote_tweet, x_like_unlike, x_follow_unfollow, x_send_dm). Backend 4-layer híbrido: xAI Grok x_search + X API v2 OAuth + Apify Tweet Scraper + Patchright fallback. Free / Pro / Agency tiers via Stripe license.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "keywords": ["x", "twitter", "automation", "grok", "mcp", "social-media", "apify", "patchright"],
+      "author": {
+        "name": "MaxVision Produtora",
+        "email": "produtoramaxvision@gmail.com"
+      },
+      "homepage": "https://x.produtoramaxvision.com.br",
+      "license": "AGPL-3.0"
+    }
+  ]
+}
