@@ -26,8 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl python3 python3-pip build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY mcp-server/package.json mcp-server/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --ignore-scripts
+COPY mcp-server/package.json ./
+COPY mcp-server/pnpm-lock.yaml* ./
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
 
 COPY mcp-server/tsconfig.json mcp-server/tsconfig.build.json mcp-server/drizzle.config.ts ./
 COPY mcp-server/src ./src
