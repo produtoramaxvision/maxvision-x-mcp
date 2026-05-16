@@ -1,7 +1,7 @@
 {
   "name": "x-maxvision",
-  "version": "0.1.0",
-  "description": "X (Twitter) automation for Claude Code: 16 MCP tools v0.1 (read + write), 4-layer hybrid (xAI Grok + X API v2 + Apify + Patchright fallback). Free / Pro / Agency tiers via Stripe.",
+  "version": "0.1.5",
+  "description": "X (Twitter) automation for Claude Code: 16 MCP tools (read + write), 3-layer hybrid (xAI Grok + X API v2 + Patchright fallback). Free / Pro / Agency tiers via Stripe.",
   "author": {
     "name": "MaxVision Produtora",
     "email": "produtoramaxvision@gmail.com",
