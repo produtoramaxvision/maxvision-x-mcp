@@ -4,25 +4,47 @@ X (Twitter) automation for Claude Code: 16 MCP tools (read + write), 3-layer hyb
 
 > **Status:** v0.1.4 — production. Hosted MCP at `https://x-api.produtoramaxvision.com.br/mcp`.
 
-## Quick start (user — once published)
+## Installation
+
+Complete setup guide available in [docs/install.md](docs/install.md). Quick steps:
+
+### Step 1: Get API key
+
+Email `produtoramaxvision@gmail.com` for Free tier API key (`mxv_<48hex>`), or visit [pricing page](https://x-api.produtoramaxvision.com.br/pricing.html) to auto-generate one.
+
+### Step 2: Set environment variables
+
+**Windows PowerShell (Administrator):**
+
+```powershell
+[Environment]::SetEnvironmentVariable("X_MAXVISION_API_KEY", "mxv_<your_key>", "User")
+# Optional: Pro license
+[Environment]::SetEnvironmentVariable("X_MAXVISION_LICENSE", "MAXV-PRO-...", "User")
+```
+
+**macOS/Linux:**
 
 ```bash
-# 1. Get an API key (Free tier — limited rate during beta)
-#    Email produtoramaxvision@gmail.com — you receive mxv_<48hex>
+# Add to ~/.bashrc, ~/.zshrc, or ~/.profile
+export X_MAXVISION_API_KEY="mxv_<your_key>"
+export X_MAXVISION_LICENSE="MAXV-PRO-..."  # optional
+```
 
-# 2. Set env (Windows PowerShell)
-[Environment]::SetEnvironmentVariable("X_MAXVISION_API_KEY", "mxv_xxxx", "User")
+### Step 3: Install plugin
 
-# 3. (Optional) Pro license
-[Environment]::SetEnvironmentVariable("X_MAXVISION_LICENSE", "MAXV-PRO-...", "User")
+```bash
+/plugin install produtoramaxvision/maxvision-x-mcp
+```
 
-# 4. Install
-claude /plugin install produtoramaxvision/maxvision-x-mcp
+### Step 4: Restart Claude Code and verify
 
-# 5. Restart Claude Code → plugin auto-connects to hosted MCP at https://x-api.produtoramaxvision.com.br/mcp
-# 6. Verify
+```bash
 /x-status
 ```
+
+Expected output shows your tier (Free/Pro/Agency) and connected status.
+
+For OAuth setup (write operations), troubleshooting, and self-host instructions, see [docs/install.md](docs/install.md) and [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## 16 MCP tools (v0.1)
 
