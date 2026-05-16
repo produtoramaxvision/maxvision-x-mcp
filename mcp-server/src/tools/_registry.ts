@@ -111,7 +111,7 @@ export function registerAllTools(server: McpServer): void {
     'x_get_replies_tree',
     {
       title: 'X Get Replies Tree',
-      description: 'Fetch full conversation replies tree via Apify (Layer C). Pro tier.',
+      description: 'Fetch replies tree via X API v2 (Layer B, 7-day window) with Patchright fallback (Layer D). Pro tier.',
       inputSchema: XGetRepliesTreeInputShape,
     },
     async (input: unknown) => xGetRepliesTreeTool(input),

@@ -26,8 +26,6 @@ const envSchema = z.object({
   X_API_BEARER_TOKEN: z.string().optional(),
   X_API_CLIENT_ID: z.string().optional(),
   X_API_CLIENT_SECRET: z.string().optional(),
-  // Apify (Layer C bulk reads)
-  APIFY_API_TOKEN: z.string().optional(),
   // LLM provider preference
   LLM_PROVIDER: z.enum(['grok', 'openrouter']).default('grok'),
   LLM_MODEL: z.string().optional(),

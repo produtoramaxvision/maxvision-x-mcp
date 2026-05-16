@@ -32,7 +32,6 @@ services:
       X_API_BEARER_TOKEN_FILE: /run/secrets/x_api_bearer
       X_API_CLIENT_ID: ${X_API_CLIENT_ID:-}
       X_API_CLIENT_SECRET_FILE: /run/secrets/x_api_client_secret
-      APIFY_API_TOKEN_FILE: /run/secrets/apify_api_token
       LLM_PROVIDER: ${LLM_PROVIDER:-grok}
       LICENSE_CHECK_ENABLED: ${LICENSE_CHECK_ENABLED:-false}
       LICENSE_SERVER_URL: ${LICENSE_SERVER_URL:-https://x-license.produtoramaxvision.com.br}
@@ -45,7 +44,6 @@ services:
       - openrouter_api_key
       - x_api_bearer
       - x_api_client_secret
-      - apify_api_token
       - webhook_secret
     volumes:
       - profile-data:/data/profiles
@@ -118,8 +116,6 @@ secrets:
     file: ./secrets/x_api_bearer.txt
   x_api_client_secret:
     file: ./secrets/x_api_client_secret.txt
-  apify_api_token:
-    file: ./secrets/apify_api_token.txt
   webhook_secret:
     file: ./secrets/webhook_secret.txt
   postgres_password:

@@ -1,8 +1,8 @@
 # MaxVision X Suite — Claude Code plugin
 
-X (Twitter) automation for Claude Code: 16 MCP tools v0.1 (read + write), 4-layer hybrid backend (xAI Grok + X API v2 + Apify + Patchright), Free / Pro / Agency tiers via Stripe.
+X (Twitter) automation for Claude Code: 16 MCP tools (read + write), 3-layer hybrid backend (xAI Grok + X API v2 + Patchright), Free / Pro / Agency tiers via Stripe.
 
-> **Status:** v0.1.0 Sprint 1 in development. Implementation mirrors `linkedin-maxvision` v0.1.0 pattern (`maxvision-linkedin-mcp-git`).
+> **Status:** v0.1.4 — production. Hosted MCP at `https://x-api.produtoramaxvision.com.br/mcp`.
 
 ## Quick start (user — once published)
 
@@ -34,14 +34,11 @@ claude /plugin install produtoramaxvision/maxvision-x-mcp
 
 ## Architecture
 
-4-layer hybrid:
+3-layer active hybrid:
 
-- **A** xAI Grok `x_search` (default reads, `LlmProvider` Grok-or-OpenRouter)
-- **B** X API v2 pay-per-use OAuth (writes + cirurgical reads)
-- **C** Apify apidojo Tweet Scraper V2 (bulk reads >1k)
-- **D** Patchright + cookie `auth_token` (fallback ToS-grey, opt-in)
-
-See [PLAN-SPRINT1.md](PLAN-SPRINT1.md) for full design.
+- **A** xAI Grok `x_search` (default reads, Grok-or-OpenRouter)
+- **B** X API v2 OAuth 2.0 PKCE (writes + reads, 7-day search window)
+- **D** Patchright + cookie `auth_token` (replies fallback, opt-in via `PATCHRIGHT_ENABLED=true`)
 
 ## Self-host
 
