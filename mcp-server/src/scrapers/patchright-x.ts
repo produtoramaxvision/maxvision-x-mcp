@@ -67,7 +67,7 @@ export async function patchrightGetReplies(args: {
     });
 
     await page.goto(`https://x.com/i/web/status/${args.conversationId}`, {
-      waitUntil: 'networkidle',
+      waitUntil: 'load',
       timeout: 30_000,
     });
     await randomDelay(2000, 3500);
