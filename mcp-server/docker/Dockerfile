@@ -48,7 +48,8 @@ ENV NODE_ENV=production \
     PNPM_HOME=/pnpm \
     PATH="/pnpm:$PATH" \
     PROFILE_BASE_DIR=/data/profiles \
-    DISPLAY=:99
+    DISPLAY=:99 \
+    PLAYWRIGHT_BROWSERS_PATH=/app/browsers
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         wget ca-certificates dumb-init \
